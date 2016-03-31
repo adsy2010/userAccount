@@ -74,6 +74,9 @@ class responses extends db{
         $sql = "SELECT users.* FROM users
                 INNER JOIN userSession ON users.uid = userSession.uid
                 WHERE userSession.salt=?";
+
+        //execute select here
+
         if(!($result = $this->getDatabase()->prepare($sql))) throw new Exception("Query failed to prepare");
         if(!($result->bind_param("s", $_SESSION['salt']))) throw new Exception("Query failed to bind parameters");
         if(!($result->execute())) throw new Exception("Query failed to execute");
@@ -104,12 +107,13 @@ class responses extends db{
         /*
         if(!($stmt = $this->getDatabase()->prepare($sql)))
             throw new Exception("Could not prepare statement.");*/
+
         $name = htmlspecialchars($_POST['name']);
         $email = (filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) ? $_POST['email'] : false;
-        $regDate = date('Y-m-d H:i:s',time());
+        //$regDate = date('Y-m-d H:i:s',time());
         $password = hash("MD5", $this->getSalt() . $_POST['password']);
 
-        $checks = array("name", "email", "regDate", "password");
+        $checks = array("name", "email", "password");
 
         //The empty check
         foreach($checks as $item)
@@ -118,10 +122,10 @@ class responses extends db{
 
         echo "{$name}<br>";
         echo "{$email}<br>";
-        echo "{$regDate}<br>";
+        echo "{$this->getCurrentDate()}<br>";
         echo "{$password}<br>";
 
-        $this->execute($sql, array("ssss", $name, $email, $regDate, $password));
+        $this->execute($sql, array("ssss", $name, $email, $this->getCurrentDate(), $password));
         /*
         if(!($stmt->bind_param("ssss", $name, $email, $regDate, $password)))
             throw new Exception("Could not bind values");
@@ -129,12 +133,15 @@ class responses extends db{
         if(!($stmt->execute()))
             throw new Exception("Could not add user to the database.", 20);
         */
-
-
         /*$stmt->store_result();
         if(!($this->getDatabase()->affected_rows == 1))
             throw new Exception("The data could not be added to the database.",20);
         $stmt->close();*/
+    }
+
+    private function getCurrentDate()
+    {
+        return date("Y-m-d H:i:s", time());
     }
 
     public function resetLogonCount()
@@ -164,11 +171,9 @@ class responses extends db{
             SELECT 1 FROM user WHERE email=? AND password=?
             ) AS tmpTable
         )";
-
         $sqlSession = "INSERT INTO userSession (uid, salt, lastActive)
                        SELECT uid, ?,? FROM user WHERE email=?";
 
-        $currentDate = date("Y-m-d H:i:s", time());
         $password = hash("MD5", $this->getSalt() . $_POST['password']);
 
         $salt = $this->generateSessionSalt();
@@ -177,14 +182,14 @@ class responses extends db{
         $this->execute($sql, array
         (
             "sss",
-            $currentDate,
+            $this->getCurrentDate(),
             $_POST['email'],
             $password
         ));
         $this->execute($sqlSession, array(
            "sss",
             $salt,
-            $currentDate,
+            $this->getCurrentDate(),
             $_POST['email']
         ));
 

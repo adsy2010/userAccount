@@ -70,6 +70,58 @@ class db implements dbInterface{
         return hash("MD5", session_id() . time());
     }
 
+    public function executeSelect($sql, $data = array())
+    {
+        if(!($stmt = $this->getDatabase()->prepare($sql)))
+            throw new Exception("Failed to prepare the query");
+
+        if(!empty($data))
+        {
+            $tmp = array();
+            foreach($data as $key => $value) $tmp[$key] = &$data[$key];
+
+            if(!(call_user_func_array(array($stmt, 'bind_param'), $tmp)))
+                throw new Exception("Failed to bind parameters");
+        }
+
+        if(!($stmt->execute()))
+            throw new Exception("Failed to execute query");
+
+
+        $stmt->store_result();
+
+        //this is the part that differs from execute()
+
+        $metadata = $stmt->result_metadata();
+        $outData = array();
+
+        $cols = $metadata->fetch_fields();
+
+        foreach($cols as $col)
+            $outData[] = &$results[$col->name];
+
+        if(!empty($outData))
+            call_user_func_array(array($stmt, 'bind_result'), $outData);
+
+        //now create the xml for output
+        while($stmt->fetch())
+        {
+            if(!isset($results))
+                throw new Exception("There are no result fields to display.");
+
+            foreach($results as $key => $val)
+            {
+                //$key is the name of the field
+                //$val is the value of the field
+            }
+
+
+        }
+
+        $stmt->close();
+
+    }
+
     /**
      * Works for insert, update and delete queries.
      *
