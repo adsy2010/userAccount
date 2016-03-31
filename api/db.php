@@ -64,4 +64,46 @@ class db implements dbInterface{
     {
         return $this->salt;
     }
+
+    public function generateSessionSalt()
+    {
+        return hash("MD5", session_id() . time());
+    }
+
+    /**
+     * Works for insert, update and delete queries.
+     *
+     * @param string $sql The SQL string to be executed
+     * @param array  $data The data to be prepared by the SQL statement
+     * Format used: "s" => "data value"
+     * @throws Exception The error raised by invalid or bad data
+     * @return int the number of affected rows by the query
+     */
+    public function execute($sql, $data = array())
+    {
+        if(!($stmt = $this->getDatabase()->prepare($sql)))
+            throw new Exception("Failed to prepare the query");
+
+        if(!empty($data))
+        {
+            $tmp = array();
+            foreach($data as $key => $value) $tmp[$key] = &$data[$key];
+
+            if(!(call_user_func_array(array($stmt, 'bind_param'), $tmp)))
+                throw new Exception("Failed to bind parameters");
+        }
+
+        if(!($stmt->execute()))
+            throw new Exception("Failed to execute query");
+
+
+        $stmt->store_result();
+
+        if(!($this->getDatabase()->affected_rows >= 1))
+            throw new Exception("The database could not be changed.",20);
+
+        $stmt->close();
+
+        return $this->getDatabase()->affected_rows;
+    }
 }

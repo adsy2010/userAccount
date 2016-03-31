@@ -101,8 +101,9 @@ class responses extends db{
     {
         $sql = "INSERT INTO user (name, email, regDate, password) VALUES (?,?,?,?)";
 
+        /*
         if(!($stmt = $this->getDatabase()->prepare($sql)))
-            throw new Exception("Could not prepare statement.");
+            throw new Exception("Could not prepare statement.");*/
         $name = htmlspecialchars($_POST['name']);
         $email = (filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) ? $_POST['email'] : false;
         $regDate = date('Y-m-d H:i:s',time());
@@ -120,17 +121,20 @@ class responses extends db{
         echo "{$regDate}<br>";
         echo "{$password}<br>";
 
+        $this->execute($sql, array("ssss", $name, $email, $regDate, $password));
+        /*
         if(!($stmt->bind_param("ssss", $name, $email, $regDate, $password)))
             throw new Exception("Could not bind values");
 
         if(!($stmt->execute()))
             throw new Exception("Could not add user to the database.", 20);
+        */
 
 
-        $stmt->store_result();
+        /*$stmt->store_result();
         if(!($this->getDatabase()->affected_rows == 1))
             throw new Exception("The data could not be added to the database.",20);
-        $stmt->close();
+        $stmt->close();*/
     }
 
     public function resetLogonCount()
@@ -138,7 +142,10 @@ class responses extends db{
         //this function is designed to reset an account and
         //set its lastOn field to the date the user registered.
 
-        $sql = "UPDATE user SET user.logonCount=0, user.lastOn=user.regDate WHERE userSession.salt=? AND user.uid=userSession.uid";
+        //resets all
+        $sql = "UPDATE user SET logonCount=0, lastOn=regDate";
+
+        $this->execute($sql);
 
     }
 
@@ -158,26 +165,33 @@ class responses extends db{
             ) AS tmpTable
         )";
 
-        $sqlSession = "INSERT INTO userSession (uid, salt, lastActive) VALUES (?,?,?)";
+        $sqlSession = "INSERT INTO userSession (uid, salt, lastActive)
+                       SELECT uid, ?,? FROM user WHERE email=?";
 
         $currentDate = date("Y-m-d H:i:s", time());
         $password = hash("MD5", $this->getSalt() . $_POST['password']);
 
-        print_r($_POST);
-
-        if(!($stmt = $this->getDatabase()->prepare($sql)))
-            throw new Exception("Failed to prepare query: {$this->getDatabase()->error}");
+        $salt = $this->generateSessionSalt();
 
 
-        if(!($stmt->bind_param("sss", $currentDate, $_POST['email'], $password)))
-            throw new Exception("Unable to bind parameters.");
+        $this->execute($sql, array
+        (
+            "sss",
+            $currentDate,
+            $_POST['email'],
+            $password
+        ));
+        $this->execute($sqlSession, array(
+           "sss",
+            $salt,
+            $currentDate,
+            $_POST['email']
+        ));
 
-        if(!($stmt->execute()))
-            throw new Exception("Unable to execute query.");
+        $_SESSION['salt'] = $salt;
 
-        echo "Success";
-
-        $stmt->close();
-
+        return true;
     }
+
+
 }
