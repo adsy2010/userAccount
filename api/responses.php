@@ -22,6 +22,12 @@ class responses extends db{
         parent::__construct();
     }
 
+    public function debugExecuteSelect()
+    {
+        header('Content-type:text/xml');
+        echo $this->get("SELECT * FROM user WHERE email=?", array("s", "adsy@00freebuild.info"));
+    }
+
     public function debugFieldNameList($table)
     {
         $sql = "SELECT * FROM {$table} LIMIT 1";
@@ -69,21 +75,24 @@ class responses extends db{
 
     }
 
-    private function retrieveUser()
+    public function retrieveUser($user = "")
     {
         $sql = "SELECT users.* FROM users
-                INNER JOIN userSession ON users.uid = userSession.uid
-                WHERE userSession.salt=?";
+                INNER JOIN userSession ON user.uid = userSession.uid
+                WHERE userSession.salt=? OR user.uid=?";
+
+        $salt = (isset($_SESSION['salt'])) ? $_SESSION['salt'] : "";
 
         //execute select here
+        return $this->get($sql, array("ss", $salt, $user));
 
-        if(!($result = $this->getDatabase()->prepare($sql))) throw new Exception("Query failed to prepare");
+        /*if(!($result = $this->getDatabase()->prepare($sql))) throw new Exception("Query failed to prepare");
         if(!($result->bind_param("s", $_SESSION['salt']))) throw new Exception("Query failed to bind parameters");
         if(!($result->execute())) throw new Exception("Query failed to execute");
         $result->store_result();
         if(!($data = $result->fetch())) throw new Exception("Data could not be captured.");
         $result->free_result();
-        $result->close();
+        $result->close();*/
 
     }
 
@@ -111,7 +120,8 @@ class responses extends db{
         $name = htmlspecialchars($_POST['name']);
         $email = (filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) ? $_POST['email'] : false;
         //$regDate = date('Y-m-d H:i:s',time());
-        $password = hash("MD5", $this->getSalt() . $_POST['password']);
+        $password = $this->generatePasswordSalt($_POST['password']);
+        //hash("MD5", $this->getSalt() . $_POST['password']);
 
         $checks = array("name", "email", "password");
 
@@ -125,7 +135,7 @@ class responses extends db{
         echo "{$this->getCurrentDate()}<br>";
         echo "{$password}<br>";
 
-        $this->execute($sql, array("ssss", $name, $email, $this->getCurrentDate(), $password));
+        $this->create($sql, array("ssss", $name, $email, $this->getCurrentDate(), $password));
         /*
         if(!($stmt->bind_param("ssss", $name, $email, $regDate, $password)))
             throw new Exception("Could not bind values");
@@ -152,7 +162,7 @@ class responses extends db{
         //resets all
         $sql = "UPDATE user SET logonCount=0, lastOn=regDate";
 
-        $this->execute($sql);
+        $this->update($sql);
 
     }
 
@@ -174,19 +184,17 @@ class responses extends db{
         $sqlSession = "INSERT INTO userSession (uid, salt, lastActive)
                        SELECT uid, ?,? FROM user WHERE email=?";
 
-        $password = hash("MD5", $this->getSalt() . $_POST['password']);
-
+        $password = $this->generatePasswordSalt($_POST['password']);
         $salt = $this->generateSessionSalt();
 
-
-        $this->execute($sql, array
+        $this->update($sql, array
         (
             "sss",
             $this->getCurrentDate(),
             $_POST['email'],
             $password
         ));
-        $this->execute($sqlSession, array(
+        $this->create($sqlSession, array(
            "sss",
             $salt,
             $this->getCurrentDate(),

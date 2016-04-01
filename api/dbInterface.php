@@ -8,10 +8,9 @@
 
 interface dbInterface {
 
-    public function get();
-    public function delete();
-    public function update();
-    public function create();
-    public function status();
+    public function get($sql, $data=array());
+    public function delete($sql, $data=array());
+    public function update($sql, $data=array());
+    public function create($sql, $data=array());
 
 } 

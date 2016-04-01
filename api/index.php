@@ -17,7 +17,8 @@ class responseHandler
         catch (Exception $e)
         {
             //echo $e->getMessage();
-            $this->responses->debugFieldNameList("user");
+            $this->responses->debugExecuteSelect();
+            //$this->responses->debugFieldNameList("user");
         }
     }
 
@@ -58,6 +59,7 @@ class responseHandler
                 break;
 
             case 'profile':
+                $this->responses->retrieveUser($_GET['obj']);
                break;
 
             case 'list':

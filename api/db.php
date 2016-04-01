@@ -11,9 +11,10 @@ class db implements dbInterface{
     /* @var mysqli $database */
     private $database;
     private $salt;
+    private $status;
 
     /**
-     * @return \mysqli
+     * @return mysqli
      */
     protected function getDatabase()
     {
@@ -25,42 +26,54 @@ class db implements dbInterface{
         $data = parse_ini_file("config.ini");
         $this->salt = $data['salt'];
         $this->database = new mysqli($data['host'], $data['username'], $data['password'], $data['database']);
+        $this->setStatus();
+
         //echo "Connected using {$data['username']}.<br>";
     }
 
-    public function get()
+    public function get($sql, $data = array())
     {
-        // TODO: Implement get() method.
-        //preg_match selects only valid table names and removes all the other crap.
-        //This defends against database attacks
-        preg_match("/[a-zA-Z_]+/", $_GET['table'], $output_array);
-        $table = $output_array[0];
+        return $this->executeSelect($sql,$data);
     }
 
-    public function delete()
+    public function delete($sql, $data = array())
     {
-        // TODO: Implement delete() method.
+        return $this->execute($sql,$data);
     }
 
-    public function update()
+    public function update($sql, $data = array())
     {
-        // TODO: Implement update() method.
+        return $this->execute($sql,$data);
     }
 
-    public function create()
+    public function create($sql, $data = array())
     {
-        // TODO: Implement create() method.
+        return $this->execute($sql,$data);
+    }
+
+    /**
+     * @param int $int an integer setting the response code
+     */
+    private function setStatus($int = 200)
+    {
+        $this->status = $int;
     }
 
     /**
      * Returns the status of the database call if not successful
+     *
+     * @return int $status Returns the status code of the response
      */
-    public function status()
+    function getStatus()
     {
-        // TODO: Implement status() method.
+        return $this->status;
     }
 
-    public function getSalt()
+
+    /**
+     * @return string $salt Returns an unhashed key used for hashing values
+     */
+    protected function getSalt()
     {
         return $this->salt;
     }
@@ -70,7 +83,12 @@ class db implements dbInterface{
         return hash("MD5", session_id() . time());
     }
 
-    public function executeSelect($sql, $data = array())
+    protected function generatePasswordSalt($key)
+    {
+        return hash("MD5",  $this->getSalt() . $key);
+    }
+
+    private function executeSelect($sql, $data = array())
     {
         if(!($stmt = $this->getDatabase()->prepare($sql)))
             throw new Exception("Failed to prepare the query");
@@ -104,15 +122,21 @@ class db implements dbInterface{
             call_user_func_array(array($stmt, 'bind_result'), $outData);
 
         //now create the xml for output
+        $x = new SimpleXMLElement("output.xml", 0, true);
+        $x->attributes()->status = $this->getStatus();
+        $x->attributes()->rowCount = "{$stmt->num_rows}";
+
+        if(!isset($results))
+            throw new Exception("There are no result fields to display.");
+
         while($stmt->fetch())
         {
-            if(!isset($results))
-                throw new Exception("There are no result fields to display.");
-
+            $y = $x->addChild("row");
             foreach($results as $key => $val)
             {
                 //$key is the name of the field
                 //$val is the value of the field
+               $y->addChild($key, $val);
             }
 
 
@@ -120,6 +144,7 @@ class db implements dbInterface{
 
         $stmt->close();
 
+        return $x->asXML();
     }
 
     /**
@@ -131,7 +156,7 @@ class db implements dbInterface{
      * @throws Exception The error raised by invalid or bad data
      * @return int the number of affected rows by the query
      */
-    public function execute($sql, $data = array())
+    private function execute($sql, $data = array())
     {
         if(!($stmt = $this->getDatabase()->prepare($sql)))
             throw new Exception("Failed to prepare the query");
