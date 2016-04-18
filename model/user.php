@@ -5,7 +5,7 @@
  * Date: 13/03/16
  * Time: 20:53
  */
-
+session_start();
 class user {
 
     private $name, $email, $lastOn, $regDate, $logonCount;
@@ -18,11 +18,29 @@ class user {
 
     public function __construct()
     {
-        $arr = json_decode(file_get_contents("db.php?method=get&table=user"), true);
-        foreach($arr as $key => $val)
-        {
-            $this->$key = $val;
+        //if(!file_exists("/api/user/1/")) echo "hello";
+        try{
+
+            $url = "http://{$_SERVER['SERVER_NAME']}/api/user/1/{$_SESSION['salt']}";
+            $xml = new SimpleXMLElement($url, 0, true);
+
+            foreach($xml->row->children() as $key => $val)
+                $this->$key = $val;
+
         }
+        catch(Exception $e)
+        {
+            echo $e->getMessage() . "<br>";
+            echo $e->getLine();
+        }
+
+        //echo "1".file_get_contents("/api/user/1/");
+        //print_r($xml);
+        //echo session_id();
+        //echo $_SESSION['salt'];
+
+        //$arr = json_decode(file_get_contents("db.php?method=get&table=user"), true);
+
     }
 
     /**

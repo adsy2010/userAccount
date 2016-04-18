@@ -5,7 +5,7 @@
  * Date: 15/03/16
  * Time: 21:08
  */
-
+session_start();
 class db implements dbInterface{
 
     /* @var mysqli $database */
@@ -24,32 +24,53 @@ class db implements dbInterface{
     public function __construct()
     {
         $data = parse_ini_file("config.ini");
-        $this->salt = $data['salt'];
+        $this->salt = $data['salt']; //If this is changed then ALL passwords will fail
         $this->database = new mysqli($data['host'], $data['username'], $data['password'], $data['database']);
         $this->setStatus();
-
-        //echo "Connected using {$data['username']}.<br>";
     }
 
+
+    /**
+     * @param       $sql
+     * @param array $data
+     * @return mixed
+     */
     public function get($sql, $data = array())
     {
         return $this->executeSelect($sql,$data);
     }
 
+    /**
+     * @param       $sql
+     * @param array $data
+     * @return int
+     */
     public function delete($sql, $data = array())
     {
         return $this->execute($sql,$data);
     }
 
+    /**
+     * @param       $sql
+     * @param array $data
+     * @return int
+     */
     public function update($sql, $data = array())
     {
         return $this->execute($sql,$data);
     }
 
+    /**
+     * @param       $sql
+     * @param array $data
+     * @return int
+     */
     public function create($sql, $data = array())
     {
         return $this->execute($sql,$data);
     }
+
+
 
     /**
      * @param int $int an integer setting the response code
@@ -123,7 +144,9 @@ class db implements dbInterface{
 
         //now create the xml for output
         $x = new SimpleXMLElement("output.xml", 0, true);
+
         $x->attributes()->status = $this->getStatus();
+
         $x->attributes()->rowCount = "{$stmt->num_rows}";
 
         if(!isset($results))

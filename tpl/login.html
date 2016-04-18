@@ -1,8 +1,22 @@
-<form action="/api/user/login/" method="post">
-    Email: <input type="text" name="email" id="email"><br>
-    Password: <input type="password" name="password" id="password"><br>
-    <input value="Login!" type="submit" name="submit" id="submit">
-</form>
-<div id="status">
-
+<!--suppress HtmlUnknownTarget -->
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+</head>
+<body>
+<div id="loginForm">
+    <form action="/api/user/login/" method="post">
+        Email: <input type="text" name="email" id="email"><br>
+        Password: <input type="password" name="password" id="password"><br>
+        <input value="Login!" type="submit" name="submit" id="submit">
+    </form>
 </div>
+    <div id="status">
+
+    </div>
+
+
+    <script src="login.js"></script>
+
+</body>
+</html>

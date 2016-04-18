@@ -37,13 +37,12 @@ class userSession {
 
     private function terminateSession()
     {
-        $this->setResponse(file_get_contents("db.php?method=delete&table=session&salt={$this->salt}"));
+        $this->setResponse(file_get_contents("/api/user/logout/"));
     }
 
     private function createSession($uid = 0)
     {
-        $salt = hash("MD5", session_id());
-        $this->setResponse(file_get_contents("db.php?table=session&salt={$salt}&uid={$uid}"));
+        $xml = simplexml_load_string(file_get_contents("/api/user/logon/")) or die("Error: Cannot create object");
     }
 
 } 
