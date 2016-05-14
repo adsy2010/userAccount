@@ -32,6 +32,12 @@ class responses extends db{
         echo $this->get("SELECT * FROM user WHERE email=?", array("s", "adsy@00freebuild.info"));
     }
 
+    public function debugLogoutAll()
+    {
+        $sql = "DELETE FROM userSession";
+        $this->delete($sql);
+    }
+
     public function debugFieldNameList($table)
     {
         $sql = "SELECT * FROM {$table} LIMIT 1";
@@ -110,6 +116,7 @@ class responses extends db{
      * Method uses the salt variable stored in $_SESSION to retrieve
      * a logged in user. If the salt variable matches, the user is returned.
      *
+     * @param $item
      * @return string An XML representation of the data stored for the user
      */
     public function retrieveCurrentUser($item)
@@ -227,6 +234,7 @@ class responses extends db{
         $sqlSession = "INSERT INTO userSession (uid, salt, lastActive)
                        SELECT uid, ?,? FROM user WHERE email=?";
 
+        //jquery erroring here
         if(empty($_POST))
             throw new Exception("A login was invoked but no form was sent.", 404);
 
@@ -253,7 +261,7 @@ class responses extends db{
         catch(Exception $e)
         {
             //customise the error to a logon error
-            throw new Exception("The logon failed.", 403);
+            throw new Exception("The logon failed. ".$_POST['email'], 403);
         }
 
         //return details for the logged on user. This supplies their name.

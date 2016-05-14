@@ -1,6 +1,13 @@
+Options +FollowSymLinks
+#RewriteLog "/log.txt"
+#RewriteLogLevel 9
 RewriteEngine On
 
 
-RewriteRule ^([a-z]+)/([a-zA-Z0-9_]+)?$ index.php?section=$1&action=$2
-RewriteRule ^([a-z]+)/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)? index.php?section=$1&action=$2&obj=$3
+RewriteRule "(.*)/\?(.*)" "index.php?$2" [QSA]
+RewriteRule ^([a-z]+)/([a-zA-Z0-9_]+)?/$ index.php?section=$1&action=$2 [QSA]
+
+
+
+#RewriteRule ^([a-z]+)/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)? index.php?section=$1&action=$2&obj=$3
 

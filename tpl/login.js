@@ -3,31 +3,38 @@
  */
 
 $(document).ready(function(){
-    $("#submit").click(function(){
+    $("#signin").click(function(){
+        //alert("Clicked");
+        var xmlData;
         $.ajax({
             url: "/api/user/login/",
-            method: "POST",
-            data: { email: $("#email").value, password: $("#password").value },
-            statusCode: {
-                200: function()
-                {
-                    //do something
-                    alert("This shows this is fired if the response works");
-                },
-                404: function()
-                {
-                    alert("If this fires there is a problem");
-                }
+            type: 'POST',
+            data: {
+                email: $("#email").val(),
+                password: $("#password").val()
+            },
+            success: function(data){
+                xmlData = data;
+                console.log(data);
+            },
+            error: function(data)
+            {
+                console.log(data);
             }
         })
-            .done(function()
+            .success(function(xmlData)
             {
-                $("#status").text("done");
-                $("#loginForm").toggle();
+                //var xmlDoc = $.parseXML(xmlData),
+                //    xmlData = $(xmlDoc),
+                var $name = $(xmlData).find("name").text();
+
+                $("#status").text("Logged in successfully.").css('color', 'green');
+                $("#userGreeting").text("Welcome "+ $name); //edit this
+                $(".loginForm").hide();
             })
             .error(function()
             {
-                $("#status").text("error");
+                $("#status").text("Incorrect username or password.").css('color', 'red');
             });
 
 

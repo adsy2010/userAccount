@@ -1,3 +1,6 @@
 RewriteEngine On
 
+#Check to see if bootstrap files are being called
+RewriteRule "^bootstrap/(.*)$" "-" [S=1]
+
 RewriteRule ^([a-z]+)/([a-zA-Z0-9_]+)?/ /api/index.php?section=$1&action=$2

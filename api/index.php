@@ -24,7 +24,7 @@ class responseHandler
                 throw new Exception("Not enough data", 404);
 
             $data = $this->section();
-            //echo $data;
+
             echo $this->respond(200, $data, "text/xml");
 
         }
@@ -66,6 +66,10 @@ class responseHandler
                 return $this->user();
                 break;
 
+            case 'auth':
+                //Check authorisation then run _GET['url'] ????
+                return $this->responses->retrieveCurrentUser($this->item);
+
             default:
                 return false;
                 break;
@@ -75,6 +79,11 @@ class responseHandler
     private function user()
     {
         $data = null;
+
+        //is authorisation needed?
+
+        $auth = $_GET['auth']; //This is a public key and can be authorised with the secret key (users password)
+
         switch($this->action)
         {
             case 'login':
@@ -85,20 +94,24 @@ class responseHandler
                 $this->responses->addUser();
                 break;
 
+            case 'logoutAll':
+                $this->responses->debugLogoutAll();
+                break;
+
             case 'logout':
                 $this->responses->logout();
                 break;
 
             case 'profile':
-                $this->responses->retrieveUser($this->item);
+                (!empty($this->item)) ? $this->responses->retrieveUser($this->item) : $this->responses->retrieveUser($auth);
                break;
+
+            case 1:
+                $data = $this->responses->retrieveCurrentUser($auth);
+                break;
 
             case 'list':
 
-                break;
-
-            case 1:
-                $data = $this->responses->retrieveCurrentUser($this->item);
                 break;
 
             case 'resetLogonCount':
